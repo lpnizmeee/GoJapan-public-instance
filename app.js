@@ -1,7 +1,7 @@
 const express = require('express');
 const multer = require('multer');
 const { S3Client, PutObjectCommand } = require('@aws-sdk/client-s3');
-const { DynamoDBClient, PutItemCommand } = require('@aws-sdk/client-dynamodb');
+const { DynamoDBClient, PutItemCommand, ScanCommand } = require('@aws-sdk/client-dynamodb'); // Import ScanCommand
 const fs = require('fs');
 const path = require('path');
 const { v4: uuidv4 } = require('uuid'); // Thêm UUID để tạo key duy nhất
@@ -25,7 +25,7 @@ const dynamoDBClient = new DynamoDBClient({
     region: 'ap-northeast-1',
 });
 
-// Tạo route để upload file
+// Route để upload file
 app.post('/upload', upload.single('file'), async (req, res) => {
     const fileContent = fs.readFileSync(req.file.path);
 
@@ -36,7 +36,7 @@ app.post('/upload', upload.single('file'), async (req, res) => {
         ContentType: req.file.mimetype
     };
 
-    // Tạo lệnh PutObject và upload file 
+    // Tạo lệnh PutObject và upload file
     const command = new PutObjectCommand(params);
 
     try {
@@ -45,7 +45,7 @@ app.post('/upload', upload.single('file'), async (req, res) => {
         // Tạo thông tin để lưu vào DynamoDB
         const uploadTime = new Date().toISOString();
         const item = {
-            key: { S: req.file.originalname }, // Tạo key duy nhất cho DynamoDB
+            key: { S: uuidv4() }, // Tạo key duy nhất cho DynamoDB
             filename: { S: req.file.originalname },
             s3Uri: { S: `s3://${params.Bucket}/${params.Key}` },
             uploadTime: { S: uploadTime }
@@ -53,7 +53,7 @@ app.post('/upload', upload.single('file'), async (req, res) => {
 
         // Thêm item vào DynamoDB
         const dynamoParams = {
-            TableName: 'S3MetadataTable', //
+            TableName: 'S3MetadataTable', // Đảm bảo bảng DynamoDB đúng tên
             Item: item
         };
 
@@ -73,7 +73,7 @@ app.post('/upload', upload.single('file'), async (req, res) => {
 // Route để hiển thị danh sách file từ DynamoDB
 app.get('/', async (req, res) => {
     const params = {
-        TableName: 'S3MetadataTable'
+        TableName: 'S3MetadataTable' //
     };
 
     try {
