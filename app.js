@@ -13,13 +13,9 @@ app.use(express.static('public'));
 // Cấu hình Multer (chỉ để lưu tạm thời trước khi upload lên S3)
 const upload = multer({ dest: 'src/uploads/' });
 
-// Khởi tạo S3 client
+// Khởi tạo S3 client mà không cần chỉ định thông tin xác thực
 const s3Client = new S3Client({
-    region: 'ap-northeast-1',
-    credentials: {
-        accessKeyId: process.env.AWS_ACCESS_KEY_ID,
-        secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY
-    }
+    region: 'ap-northeast-1', // Đảm bảo sử dụng đúng region
 });
 
 // Tạo route để upload file
