@@ -70,6 +70,35 @@ app.post('/upload', upload.single('file'), async (req, res) => {
     }
 });
 
+// Route để hiển thị danh sách file từ DynamoDB
+app.get('/', async (req, res) => {
+    const params = {
+        TableName: 'YourDynamoDBTableName'
+    };
+
+    try {
+        const data = await dynamoDBClient.send(new ScanCommand(params));
+
+        // Đọc file HTML
+        let html = fs.readFileSync(path.join(__dirname, 'public', 'index.html'), 'utf8');
+
+        // Tạo danh sách file
+        let fileList = '';
+        data.Items.forEach(item => {
+            fileList += `<li><a href="${item.s3Uri.S}" target="_blank">${item.filename.S}</a> (Uploaded at: ${item.uploadTime.S})</li>`;
+        });
+
+        // Chèn danh sách vào HTML
+        html = html.replace('<ul id="file-list"></ul>', `<ul id="file-list">${fileList}</ul>`);
+
+        // Gửi HTML đã chỉnh sửa cho client
+        res.send(html);
+    } catch (err) {
+        console.error(err);
+        res.status(500).send('Error retrieving files from DynamoDB');
+    }
+});
+
 // Khởi chạy server
 const PORT = process.env.PORT || 80;
 app.listen(PORT, () => {
