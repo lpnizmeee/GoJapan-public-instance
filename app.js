@@ -14,7 +14,9 @@ app.use(express.static('public'));
 const upload = multer({ dest: 'src/uploads/' });
 
 // Khởi tạo S3 client
-const s3Client = new S3Client();
+const s3Client = new S3Client({
+    region: 'ap-northeast-1',
+});
 
 // Tạo route để upload file
 app.post('/upload', upload.single('file'), (req, res) => {
