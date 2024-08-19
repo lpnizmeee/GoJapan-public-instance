@@ -1,0 +1,1 @@
+# GoJapan-public-instance
