@@ -4,21 +4,35 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>File List</title>
+    <title>Upload File</title>
 </head>
 
 <body>
-    <h1>Uploaded Files</h1>
-    <ul id="file-list">
-        <% files.forEach(file=> { %>
-            <li>
-                <a href="<%= file.s3Uri %>" target="_blank">
-                    <%= file.filename %>
-                </a>
-                (Uploaded at: <%= file.uploadTime %>)
-            </li>
-            <% }); %>
-    </ul>
+    <h1>Upload a File to S3</h1>
+    <form action="/upload" method="post" enctype="multipart/form-data">
+        <input type="file" name="file" required>
+        <div>
+            -----------------------------------<br>
+        </div>
+        <button
+            style="border: 1px solid black; padding: 4px; border-radius: 10%; margin-top: 1rem; background-color: #008CBA; color: white; font-size: 1.2rem;"
+            type="submit">Upload</button>
+        <div>
+            -----------------------------------<br>
+        </div>
+        <h2>Files in DynamoDB</h2>
+        <ul id="file-list">
+            <% files.forEach(file=> { %>
+                <li>
+                    <a href="<%= file.s3Uri %>" target="_blank">
+                        <%= file.filename %>
+                    </a>
+                    (Uploaded at: <%= file.uploadTime %>)
+                </li>
+                <% }); %>
+        </ul>
+    </form>
+    </form>
 </body>
 
 </html>
