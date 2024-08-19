@@ -73,7 +73,7 @@ app.post('/upload', upload.single('file'), async (req, res) => {
 // Route để hiển thị danh sách file từ DynamoDB
 app.get('/', async (req, res) => {
     const params = {
-        TableName: 'YourDynamoDBTableName'
+        TableName: 'S3MetadataTable'
     };
 
     try {
