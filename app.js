@@ -16,6 +16,10 @@ const upload = multer({ dest: 'src/uploads/' });
 // Khởi tạo S3 client
 const s3Client = new S3Client({
     region: 'ap-northeast-1',
+    credentials: {
+        accessKeyId: process.env.AWS_ACCESS_KEY_ID,
+        secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY
+    }
 });
 
 // Tạo route để upload file
