@@ -72,11 +72,16 @@ app.post('/upload', upload.single('file'), async (req, res) => {
 // Route để hiển thị danh sách file từ DynamoDB
 app.get('/', async (req, res) => {
     const params = {
-        TableName: 'S3MetadataTable' //
+        TableName: 'S3MetadataTable' // Đảm bảo bảng DynamoDB đúng tên
     };
 
     try {
         const data = await dynamoDBClient.send(new ScanCommand(params));
+
+        // Kiểm tra xem có dữ liệu không
+        if (!data.Items || data.Items.length === 0) {
+            return res.send('No files found.');
+        }
 
         // Đọc file HTML
         let html = fs.readFileSync(path.join(__dirname, 'public', 'index.html'), 'utf8');
@@ -84,7 +89,11 @@ app.get('/', async (req, res) => {
         // Tạo danh sách file
         let fileList = '';
         data.Items.forEach(item => {
-            fileList += `<li><a href="${item.s3Uri.S}" target="_blank">${item.filename.S}</a> (Uploaded at: ${item.uploadTime.S})</li>`;
+            // Xử lý dữ liệu từ DynamoDB
+            const s3Uri = item.s3Uri ? item.s3Uri.S : 'No URI';
+            const filename = item.filename ? item.filename.S : 'No filename';
+
+            fileList += `<li><a href="${s3Uri}" target="_blank">${filename}</a> (Uploaded at: ${item.uploadTime.S})</li>`;
         });
 
         // Chèn danh sách vào HTML
@@ -93,10 +102,11 @@ app.get('/', async (req, res) => {
         // Gửi HTML đã chỉnh sửa cho client
         res.send(html);
     } catch (err) {
-        console.error(err);
+        console.error('Error retrieving files from DynamoDB:', err);
         res.status(500).send('Error retrieving files from DynamoDB');
     }
 });
+
 
 // Khởi chạy server
 const PORT = process.env.PORT || 80;
