@@ -4,7 +4,6 @@ const { S3Client, PutObjectCommand } = require('@aws-sdk/client-s3');
 const { DynamoDBClient, PutItemCommand, ScanCommand } = require('@aws-sdk/client-dynamodb'); // Import ScanCommand
 const fs = require('fs');
 const path = require('path');
-const { v4: uuidv4 } = require('uuid'); // Thêm UUID để tạo key duy nhất
 
 // Khởi tạo Express app
 const app = express();
@@ -45,7 +44,7 @@ app.post('/upload', upload.single('file'), async (req, res) => {
         // Tạo thông tin để lưu vào DynamoDB
         const uploadTime = new Date().toISOString();
         const item = {
-            key: { S: uuidv4() }, // Tạo key duy nhất cho DynamoDB
+            key: { S: req.file.originalname }, // Tạo key duy nhất cho DynamoDB
             filename: { S: req.file.originalname },
             s3Uri: { S: `s3://${params.Bucket}/${params.Key}` },
             uploadTime: { S: uploadTime }
