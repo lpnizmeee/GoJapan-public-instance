@@ -1,12 +1,16 @@
 const express = require('express');
 const multer = require('multer');
 const { S3Client, PutObjectCommand } = require('@aws-sdk/client-s3');
-const { DynamoDBClient, PutItemCommand, ScanCommand } = require('@aws-sdk/client-dynamodb'); // Import ScanCommand
+const { DynamoDBClient, ScanCommand, PutItemCommand } = require('@aws-sdk/client-dynamodb');
 const fs = require('fs');
 const path = require('path');
 
 // Khởi tạo Express app
 const app = express();
+
+// Cấu hình view engine EJS
+app.set('view engine', 'ejs');
+app.set('views', path.join(__dirname, 'views'));
 
 // Thiết lập thư mục tĩnh
 app.use(express.static('public'));
@@ -24,7 +28,7 @@ const dynamoDBClient = new DynamoDBClient({
     region: 'ap-northeast-1',
 });
 
-// Route để upload file
+// Tạo route để upload file
 app.post('/upload', upload.single('file'), async (req, res) => {
     const fileContent = fs.readFileSync(req.file.path);
 
@@ -35,7 +39,7 @@ app.post('/upload', upload.single('file'), async (req, res) => {
         ContentType: req.file.mimetype
     };
 
-    // Tạo lệnh PutObject và upload file
+    // Tạo lệnh PutObject và upload file 
     const command = new PutObjectCommand(params);
 
     try {
@@ -44,7 +48,7 @@ app.post('/upload', upload.single('file'), async (req, res) => {
         // Tạo thông tin để lưu vào DynamoDB
         const uploadTime = new Date().toISOString();
         const item = {
-            key: { S: req.file.originalname }, // Tạo key duy nhất cho DynamoDB
+            key: { S: req.file.originalname },
             filename: { S: req.file.originalname },
             s3Uri: { S: `s3://${params.Bucket}/${params.Key}` },
             uploadTime: { S: uploadTime }
@@ -52,7 +56,7 @@ app.post('/upload', upload.single('file'), async (req, res) => {
 
         // Thêm item vào DynamoDB
         const dynamoParams = {
-            TableName: 'S3MetadataTable', // Đảm bảo bảng DynamoDB đúng tên
+            TableName: 'S3MetadataTable',
             Item: item
         };
 
@@ -72,41 +76,26 @@ app.post('/upload', upload.single('file'), async (req, res) => {
 // Route để hiển thị danh sách file từ DynamoDB
 app.get('/', async (req, res) => {
     const params = {
-        TableName: 'S3MetadataTable' // Đảm bảo bảng DynamoDB đúng tên
+        TableName: 'S3MetadataTable'
     };
 
     try {
         const data = await dynamoDBClient.send(new ScanCommand(params));
 
-        // Kiểm tra xem có dữ liệu không
-        if (!data.Items || data.Items.length === 0) {
-            return res.send('No files found.');
-        }
+        // Tạo danh sách file từ dữ liệu DynamoDB
+        const files = data.Items.map(item => ({
+            s3Uri: item.s3Uri.S,
+            filename: item.filename.S,
+            uploadTime: item.uploadTime.S
+        }));
 
-        // Đọc file HTML
-        let html = fs.readFileSync(path.join(__dirname, 'public', 'index.html'), 'utf8');
-
-        // Tạo danh sách file
-        let fileList = '';
-        data.Items.forEach(item => {
-            // Xử lý dữ liệu từ DynamoDB
-            const s3Uri = item.s3Uri ? item.s3Uri.S : 'No URI';
-            const filename = item.filename ? item.filename.S : 'No filename';
-
-            fileList += `<li><a href="${s3Uri}" target="_blank">${filename}</a> (Uploaded at: ${item.uploadTime.S})</li>`;
-        });
-
-        // Chèn danh sách vào HTML
-        html = html.replace('<ul id="file-list"></ul>', `<ul id="file-list">${fileList}</ul>`);
-
-        // Gửi HTML đã chỉnh sửa cho client
-        res.send(html);
+        // Render HTML với danh sách file
+        res.render('index', { files });
     } catch (err) {
         console.error('Error retrieving files from DynamoDB:', err);
         res.status(500).send('Error retrieving files from DynamoDB');
     }
 });
-
 
 // Khởi chạy server
 const PORT = process.env.PORT || 80;
