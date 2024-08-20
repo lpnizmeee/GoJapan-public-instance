@@ -24,7 +24,7 @@
         <ul id="file-list">
             <% files.forEach(file=> { %>
                 <li>
-                    <a href="<%= file.s3Uri %>" target="_blank">
+                    <a href="/file/<%= file.filename %>" target="_blank">
                         <%= file.filename %>
                     </a>
                     (Uploaded at: <%= file.uploadTime %>)

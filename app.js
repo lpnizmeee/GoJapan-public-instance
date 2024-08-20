@@ -97,6 +97,37 @@ app.get('/', async (req, res) => {
     }
 });
 
+app.get('/file/:key', async (req, res) => {
+    const key = req.params.key;
+
+    try {
+        // Tạo lệnh GetObject để lấy nội dung file từ S3
+        const getObjectParams = {
+            Bucket: 'cloud-internship-project3-s3', // Thay bằng tên bucket của bạn
+            Key: key,
+        };
+
+        const command = new GetObjectCommand(getObjectParams);
+        const response = await s3Client.send(command);
+
+        // Đọc nội dung file từ S3 response
+        let fileContent = '';
+        response.Body.setEncoding('utf-8');
+        response.Body.on('data', chunk => {
+            fileContent += chunk;
+        });
+
+        response.Body.on('end', () => {
+            res.send(`<pre>${fileContent}</pre>`);
+        });
+
+    } catch (err) {
+        console.error('Error retrieving file from S3:', err);
+        res.status(500).send('Error retrieving file from S3');
+    }
+});
+
+
 // Khởi chạy server
 const PORT = process.env.PORT || 80;
 app.listen(PORT, () => {
