@@ -84,9 +84,9 @@ app.get('/', async (req, res) => {
 
         // Tạo danh sách file từ dữ liệu DynamoDB
         const files = data.Items.map(item => ({
-            s3Uri: item.s3Uri.S,
-            filename: item.filename.S,
-            uploadTime: item.uploadTime.S
+            s3Uri: item.s3Uri ? item.s3Uri.S : 'No URI',
+            filename: item.filename ? item.filename.S : 'No filename',
+            uploadTime: item.uploadTime ? item.uploadTime.S : 'No upload time'
         }));
 
         // Render HTML với danh sách file
@@ -97,14 +97,13 @@ app.get('/', async (req, res) => {
     }
 });
 
+
 app.get('/file/:key', async (req, res) => {
-    const key = req.params.key;
 
     try {
         // Tạo lệnh GetObject để lấy nội dung file từ S3
         const getObjectParams = {
             Bucket: 'cloud-internship-project3-s3', // Thay bằng tên bucket của bạn
-            Key: key,
         };
 
         const command = new GetObjectCommand(getObjectParams);
