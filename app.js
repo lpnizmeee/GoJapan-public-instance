@@ -99,11 +99,13 @@ app.get('/', async (req, res) => {
 
 
 app.get('/file/:key', async (req, res) => {
+    const { key } = req.params;
 
     try {
         // Tạo lệnh GetObject để lấy nội dung file từ S3
         const getObjectParams = {
-            Bucket: 'cloud-internship-project3-s3', // Thay bằng tên bucket của bạn
+            Bucket: 'cloud-internship-project3-s3',
+            Key: key
         };
 
         const command = new GetObjectCommand(getObjectParams);
